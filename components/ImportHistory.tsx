@@ -1,12 +1,13 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable react-hooks/immutability */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState } from "react";
 import { JetBrains_Mono } from "next/font/google";
-
 import { getHistory } from "@/services/api";
 import { FileText, CheckCircle, ChevronDown } from "lucide-react";
+import VirtualizedTable from "./VirtualizedTable";
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
@@ -17,6 +18,26 @@ export default function ImportHistory() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const isDarkMode = document.documentElement.classList.contains("dark");
+    setIsDark(isDarkMode);
+  }, []);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isDarkMode = document.documentElement.classList.contains("dark");
+      setIsDark(isDarkMode);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     loadHistory();
@@ -38,7 +59,10 @@ export default function ImportHistory() {
   if (loading) {
     return (
       <div
-        className={`${mono.className} p-10 text-center text-sm text-[#7C8A7A]`}
+        className={`${mono.className} p-10 text-center text-sm`}
+        style={{
+          color: isDark ? "#8FA090" : "#7C8A7A",
+        }}
       >
         Loading history...
       </div>
@@ -47,7 +71,14 @@ export default function ImportHistory() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-2xl font-bold text-[#16241C]">Import History</h2>
+      <h2
+        className="text-2xl font-bold"
+        style={{
+          color: isDark ? "#E7EDE2" : "#16241C",
+        }}
+      >
+        Import History
+      </h2>
 
       <div className="grid gap-4">
         {history.map((item) => {
@@ -55,25 +86,54 @@ export default function ImportHistory() {
           const detailRows = Object.entries(item).filter(
             ([key]) => !["_id", "records"].includes(key),
           );
+          const recordHeaders =
+            Array.isArray(item.records) && item.records.length > 0
+              ? Object.keys(item.records[0])
+              : [];
 
           return (
             <div
               key={item._id}
-              className="rounded-lg border border-[#D7DFCF] bg-white shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+              className="rounded-lg border shadow-sm overflow-hidden transition-shadow hover:shadow-md"
+              style={{
+                borderColor: isDark ? "#2A362E" : "#D7DFCF",
+                backgroundColor: isDark ? "#16201A" : "#FFFFFF",
+              }}
             >
               <button
                 onClick={() => toggle(item._id)}
                 className="w-full flex justify-between items-center p-5 text-left focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-[#2F6B4F]"
               >
                 <div className="flex gap-4 items-center">
-                  <div className="bg-[#EAF1E6] p-3 rounded-md">
-                    <FileText className="text-[#2F6B4F]" size={20} />
+                  <div
+                    className="p-3 rounded-md"
+                    style={{
+                      backgroundColor: isDark ? "#1C271F" : "#EAF1E6",
+                    }}
+                  >
+                    <FileText
+                      className="text-[#2F6B4F] dark:text-[#4CA378]"
+                      size={20}
+                      style={{
+                        color: isDark ? "#4CA378" : "#2F6B4F",
+                      }}
+                    />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#16241C]">
+                    <h3
+                      className="font-semibold"
+                      style={{
+                        color: isDark ? "#E7EDE2" : "#16241C",
+                      }}
+                    >
                       {item.fileName}
                     </h3>
-                    <p className={`${mono.className} text-xs text-[#7C8A7A]`}>
+                    <p
+                      className={`${mono.className} text-xs`}
+                      style={{
+                        color: isDark ? "#8FA090" : "#7C8A7A",
+                      }}
+                    >
                       {new Date(item.createdAt).toLocaleString()}
                     </p>
                   </div>
@@ -81,46 +141,98 @@ export default function ImportHistory() {
 
                 <div className="flex gap-5 items-center">
                   <div className="text-center">
-                    <p className={`${mono.className} font-bold text-[#16241C]`}>
+                    <p
+                      className={`${mono.className} font-bold`}
+                      style={{
+                        color: isDark ? "#E7EDE2" : "#16241C",
+                      }}
+                    >
                       {item.importedRecords}
                     </p>
-                    <span className="text-xs text-[#7C8A7A]">Imported</span>
+                    <span
+                      className="text-xs"
+                      style={{
+                        color: isDark ? "#8FA090" : "#7C8A7A",
+                      }}
+                    >
+                      Imported
+                    </span>
                   </div>
 
                   <div className="text-center">
-                    <p className={`${mono.className} font-bold text-[#16241C]`}>
+                    <p
+                      className={`${mono.className} font-bold`}
+                      style={{
+                        color: isDark ? "#E7EDE2" : "#16241C",
+                      }}
+                    >
                       {item.skippedRecords}
                     </p>
-                    <span className="text-xs text-[#7C8A7A]">Skipped</span>
+                    <span
+                      className="text-xs"
+                      style={{
+                        color: isDark ? "#8FA090" : "#7C8A7A",
+                      }}
+                    >
+                      Skipped
+                    </span>
                   </div>
 
-                  <span className="flex items-center gap-1 text-[#2F6B4F] bg-[#EAF1E6] px-3 py-1 rounded-full text-sm">
+                  <span
+                    className="flex items-center gap-1 px-3 py-1 rounded-full text-sm"
+                    style={{
+                      color: isDark ? "#4CA378" : "#2F6B4F",
+                      backgroundColor: isDark ? "#1C271F" : "#EAF1E6",
+                    }}
+                  >
                     <CheckCircle size={15} />
                     {item.status}
                   </span>
 
                   <ChevronDown
                     size={18}
-                    className={`text-[#7C8A7A] transition-transform ${
+                    className={`transition-transform ${
                       isOpen ? "rotate-180" : ""
                     }`}
+                    style={{
+                      color: isDark ? "#8FA090" : "#7C8A7A",
+                    }}
                   />
                 </div>
               </button>
 
               {isOpen && (
-                <div className="border-t border-[#D7DFCF] bg-[#F7F9F4] p-5">
+                <div
+                  className="border-t p-5"
+                  style={{
+                    borderColor: isDark ? "#2A362E" : "#D7DFCF",
+                    backgroundColor: isDark ? "#10160F" : "#F7F9F4",
+                  }}
+                >
                   <table className={`${mono.className} w-full text-xs`}>
                     <tbody>
                       {detailRows.map(([key, value]) => (
                         <tr
                           key={key}
-                          className="border-b border-[#E3E9DC] last:border-0"
+                          className="border-b last:border-0"
+                          style={{
+                            borderColor: isDark ? "#222B25" : "#E3E9DC",
+                          }}
                         >
-                          <td className="py-2 pr-4 text-[#7C8A7A] uppercase tracking-wide w-40">
+                          <td
+                            className="py-2 pr-4 uppercase tracking-wide w-40"
+                            style={{
+                              color: isDark ? "#8FA090" : "#7C8A7A",
+                            }}
+                          >
                             {key}
                           </td>
-                          <td className="py-2 text-[#16241C]">
+                          <td
+                            className="py-2"
+                            style={{
+                              color: isDark ? "#E7EDE2" : "#16241C",
+                            }}
+                          >
                             {String(value ?? "—")}
                           </td>
                         </tr>
@@ -128,39 +240,14 @@ export default function ImportHistory() {
                     </tbody>
                   </table>
 
-                  {Array.isArray(item.records) && item.records.length > 0 && (
-                    <div className="mt-4 overflow-auto max-h-64 border border-[#D7DFCF] rounded-md">
-                      <table className="min-w-full text-sm">
-                        <thead className="sticky top-0 bg-[#EAF1E6]">
-                          <tr>
-                            {Object.keys(item.records[0]).map((h) => (
-                              <th
-                                key={h}
-                                className={`${mono.className} p-2 text-left text-xs uppercase tracking-wide text-[#5B6B5F] border-b border-[#D7DFCF]`}
-                              >
-                                {h}
-                              </th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {item.records.map((row: any, i: number) => (
-                            <tr
-                              key={i}
-                              className="odd:bg-white even:bg-[#F7F9F4]"
-                            >
-                              {Object.keys(item.records[0]).map((h) => (
-                                <td
-                                  key={h}
-                                  className={`${mono.className} p-2 border-b border-[#E3E9DC] text-black`}
-                                >
-                                  {String(row[h] ?? "")}
-                                </td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                  {recordHeaders.length > 0 && (
+                    <div className="mt-4">
+                      <VirtualizedTable
+                        headers={recordHeaders}
+                        rows={item.records}
+                        maxHeight={260}
+                        rowHeight={36}
+                      />
                     </div>
                   )}
                 </div>
