@@ -34,5 +34,5 @@ cp .env.example .env.local
 # Start development server
 npm run dev
 
-# GrowEasy CSV Importer - Frontend
+
 
