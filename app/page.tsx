@@ -1,65 +1,151 @@
-import Image from "next/image";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
+import { useState } from "react";
+import { JetBrains_Mono, Inter } from "next/font/google";
+
+import CsvUploader from "@/components/CsvUploader";
+import PreviewTable from "@/components/PreviewTable";
+import ResultTable from "@/components/ResultTable";
+import ImportHistory from "@/components/ImportHistory";
+import { importCSV } from "@/services/api";
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+});
+const sans = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+// const STATS = [
+//   { ref: "A1", label: "Total Imports", value: "24" },
+//   { ref: "B1", label: "AI Processed Leads", value: "1,240" },
+//   { ref: "C1", label: "Accuracy", value: "98%" },
+// ];
+
+function CellLabel({ text }: { text: string }) {
+  return (
+    <span
+      className={`${mono.className} absolute -top-2.5 left-4 bg-[#EFF2EA] px-1.5 text-[10px] tracking-widest text-[#7C8A7A]`}
+    >
+      {text}
+    </span>
+  );
+}
 
 export default function Home() {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<any[]>([]);
+  const [records, setRecords] = useState<any[]>([]);
+
+  function handleFile(file: File) {
+    setFile(file);
+
+    import("papaparse").then(({ default: Papa }) => {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete(result) {
+          setPreview(result.data as any[]);
+        },
+      });
+    });
+  }
+
+  async function confirmImport() {
+    if (!file) return;
+
+    const data = await importCSV(file);
+    setRecords(data.records);
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div
+      className={`${sans.className} min-h-screen bg-[#EFF2EA] p-6 md:p-10`}
+      style={{
+        backgroundImage:
+          "linear-gradient(#DEE5D6 1px, transparent 1px), linear-gradient(90deg, #DEE5D6 1px, transparent 1px)",
+        backgroundSize: "36px 36px",
+        backgroundPosition: "-1px -1px",
+      }}
+    >
+      <style jsx global>{`
+        @keyframes riseIn {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .rise-in {
+          animation: riseIn 0.5s ease-out both;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .rise-in {
+            animation: none;
+          }
+        }
+      `}</style>
+
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="rise-in flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <div
+              className={`${mono.className} text-[11px] tracking-[0.25em] text-[#2F6B4F] mb-2`}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              SHEET → CRM
+            </div>
+            <h1 className="text-4xl font-bold text-[#16241C] tracking-tight">
+              GrowEasy CSV Importer
+            </h1>
+            <p className="text-[#5B6B5F] mt-1">
+              Upload a CSV. AI maps every column. Clean leads land in your CRM.
+            </p>
+          </div>
+        </div>
+
+        {/* <div className="grid md:grid-cols-3 gap-5">
+          {STATS.map((s, i) => (
+            <div
+              key={s.ref}
+              className="rise-in relative bg-white rounded-lg p-6 border border-[#D7DFCF] shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+              style={{ animationDelay: `${i * 90}ms` }}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <CellLabel text={s.ref} />
+              <h3 className="text-sm text-[#5B6B5F]">{s.label}</h3>
+              <p
+                className={`${mono.className} text-3xl font-bold text-[#16241C] mt-1`}
+              >
+                {s.value}
+              </p>
+            </div>
+          ))}
+        </div> */}
+
+        <div className="relative bg-white rounded-lg p-8 border-2 border-dashed border-[#B9C6AF]">
+          <CellLabel text="A1 — drop file" />
+          <CsvUploader onUpload={handleFile} />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <PreviewTable rows={preview} onConfirm={confirmImport} />
+
+        {records.length > 0 && (
+          <div className="rise-in relative bg-white rounded-lg p-6 border border-[#D7DFCF] shadow-sm">
+            <CellLabel text="C1 — mapped" />
+            <ResultTable records={records} />
+          </div>
+        )}
+
+        <div className="relative bg-white rounded-lg p-8 border border-[#D7DFCF] shadow-sm">
+          <CellLabel text="D1 — history" />
+          <ImportHistory />
         </div>
-      </main>
+      </div>
     </div>
   );
 }
